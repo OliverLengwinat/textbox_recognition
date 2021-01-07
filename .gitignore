@@ -5,3 +5,4 @@ run_venv.sh
 *.save
 .vscode/
 .idea/
+__pycache__/
