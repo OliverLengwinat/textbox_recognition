@@ -8,8 +8,8 @@ import numpy as np
 # minimum size of extracted boxes
 MIN_WIDTH = 12
 MIN_HEIGHT = 4
-MIN_ASP_RATIO = 2.5
-MAX_ASP_RATIO = 3.5
+MIN_ASP_RATIO = 2.0
+MAX_ASP_RATIO = 3.0
 
 # minimum length of straight lines to extract (unit unknown)
 MIN_EDGE_LENGTH = 4
