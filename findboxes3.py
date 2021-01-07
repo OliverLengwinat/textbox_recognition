@@ -184,69 +184,74 @@ def sort_contours(cnts, method="left-to-right"):
     # return the list of sorted contours and bounding boxes
     return (cnts, boundingBoxes)
 
+# the main function
+def findboxes(image):
+    mask = get_color_mask(image)
+    image_highcontrast = combine_process(image, mask)
 
-parser = argparse.ArgumentParser(description='Trying to detect boxes on an image.')
-parser.add_argument('--imgloc', '-i', default='images/1_300_400.png', help='the (single) input image\'s location')
-args = parser.parse_args()
-image = cv2.imread(args.imgloc)
+    cv2.imshow("image_highcontrast", image_highcontrast)
 
-mask = get_color_mask(image)
-image_highcontrast = combine_process(image, mask)
+    # Thresholding the image
+    thresh, img_bin = cv2.threshold(image_highcontrast, 128, 255,cv2.THRESH_BINARY|     cv2.THRESH_OTSU)
 
-cv2.imshow("image_highcontrast", image_highcontrast)
+    # Invert the image
+    img_bin = 255-img_bin
+    cv2.imshow("Image_bin",img_bin)
 
-# Thresholding the image
-(thresh, img_bin) = cv2.threshold(image_highcontrast, 128, 255,cv2.THRESH_BINARY|     cv2.THRESH_OTSU)
+    # Defining a kernel length
+    kernel_length = np.array(image).shape[1]//80*MIN_EDGE_LENGTH
 
-# Invert the image
-img_bin = 255-img_bin
-cv2.imshow("Image_bin",img_bin)
+    # A verticle kernel of (1 X kernel_length), which will detect all the verticle lines from the image.
+    verticle_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, kernel_length))
+    # A horizontal kernel of (kernel_length X 1), which will help to detect all the horizontal line from the image.
+    hori_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (kernel_length, 1))
+    # A kernel of (3 X 3) ones.
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
 
-# Defining a kernel length
-kernel_length = np.array(image).shape[1]//80*MIN_EDGE_LENGTH
+    # Morphological operation to detect vertical lines from an image
+    img_temp1 = cv2.erode(img_bin, verticle_kernel, iterations=3)
+    verticle_lines_img = cv2.dilate(img_temp1, verticle_kernel, iterations=3)
+    cv2.imshow("verticle_lines.jpg",verticle_lines_img)
+    # Morphological operation to detect horizontal lines from an image
+    img_temp2 = cv2.erode(img_bin, hori_kernel, iterations=3)
+    horizontal_lines_img = cv2.dilate(img_temp2, hori_kernel, iterations=3)
+    cv2.imshow("horizontal_lines.jpg",horizontal_lines_img)
 
-# A verticle kernel of (1 X kernel_length), which will detect all the verticle lines from the image.
-verticle_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, kernel_length))
-# A horizontal kernel of (kernel_length X 1), which will help to detect all the horizontal line from the image.
-hori_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (kernel_length, 1))
-# A kernel of (3 X 3) ones.
-kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+    # Weighting parameters, this will decide the quantity of an image to be added to make a new image.
+    alpha = 0.5
+    beta = 1.0 - alpha
+    # This function helps to add two image with specific weight parameter to get a third image as summation of two image.
+    img_binary_boxes = cv2.addWeighted(verticle_lines_img, alpha, horizontal_lines_img, beta, 0.0)
+    img_binary_boxes = cv2.erode(~img_binary_boxes, kernel, iterations=2)
+    (thresh, img_binary_boxes) = cv2.threshold(img_binary_boxes, 128,255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+    cv2.imshow("img_binary_boxes", img_binary_boxes)
 
-# Morphological operation to detect vertical lines from an image
-img_temp1 = cv2.erode(img_bin, verticle_kernel, iterations=3)
-verticle_lines_img = cv2.dilate(img_temp1, verticle_kernel, iterations=3)
-cv2.imshow("verticle_lines.jpg",verticle_lines_img)
-# Morphological operation to detect horizontal lines from an image
-img_temp2 = cv2.erode(img_bin, hori_kernel, iterations=3)
-horizontal_lines_img = cv2.dilate(img_temp2, hori_kernel, iterations=3)
-cv2.imshow("horizontal_lines.jpg",horizontal_lines_img)
+    # Find contours for image, which will detect all the boxes
+    contours, hierarchy = cv2.findContours(img_binary_boxes, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    # Sort all the contours by top to bottom.
+    (contours, boundingBoxes) = sort_contours(contours, method="top-to-bottom")
 
-# Weighting parameters, this will decide the quantity of an image to be added to make a new image.
-alpha = 0.5
-beta = 1.0 - alpha
-# This function helps to add two image with specific weight parameter to get a third image as summation of two image.
-img_binary_boxes = cv2.addWeighted(verticle_lines_img, alpha, horizontal_lines_img, beta, 0.0)
-img_binary_boxes = cv2.erode(~img_binary_boxes, kernel, iterations=2)
-(thresh, img_binary_boxes) = cv2.threshold(img_binary_boxes, 128,255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
-cv2.imshow("img_binary_boxes", img_binary_boxes)
+    idx = 0
+    for c in contours:
+        # Returns the location and width,height for every contour
+        x, y, w, h = cv2.boundingRect(c)
 
-# Find contours for image, which will detect all the boxes
-contours, hierarchy = cv2.findContours(img_binary_boxes, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-# Sort all the contours by top to bottom.
-(contours, boundingBoxes) = sort_contours(contours, method="top-to-bottom")
+        # If the box height is greater then MIN_HEIGHT, widht is > MIN_HEIGHT, then only save it as a box in output folder.
+        if (w > MIN_WIDTH and h > MIN_HEIGHT) and MIN_ASP_RATIO < w/h < MAX_ASP_RATIO:
+            idx += 1
+            new_img = image[y:y+h, x:x+w]
+            new_img_hc = image_highcontrast[y:y+h, x:x+w]
+            cv2.imwrite('output/'+str(idx) + '.png', new_img)
+            cv2.imwrite('output_high_contrast/'+str(idx) + '.png', new_img_hc)
 
-idx = 0
-for c in contours:
-    # Returns the location and width,height for every contour
-    x, y, w, h = cv2.boundingRect(c)
 
-    # If the box height is greater then MIN_HEIGHT, widht is > MIN_HEIGHT, then only save it as a box in output folder.
-    if (w > MIN_WIDTH and h > MIN_HEIGHT) and MIN_ASP_RATIO < w/h < MAX_ASP_RATIO:
-        idx += 1
-        new_img = image[y:y+h, x:x+w]
-        new_img_hc = image_highcontrast[y:y+h, x:x+w]
-        cv2.imwrite('output/'+str(idx) + '.png', new_img)
-        cv2.imwrite('output_high_contrast/'+str(idx) + '.png', new_img_hc)
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Trying to detect boxes on an image.')
+    parser.add_argument('--imgloc', '-i', default='images/1_300_400.png', help='the (single) input image\'s location')
+    args = parser.parse_args()
+    image = cv2.imread(args.imgloc)
 
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+    findboxes(image)
+
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
