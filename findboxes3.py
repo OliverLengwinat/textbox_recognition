@@ -185,11 +185,11 @@ def sort_contours(cnts, method="left-to-right"):
     return (cnts, boundingBoxes)
 
 # the main function
-def findboxes(image, verbose=False):
+def findboxes(image, verbosity=0):
     mask = get_color_mask(image)
     image_highcontrast = combine_process(image, mask)
 
-    if verbose:
+    if verbosity >= 2:
         cv2.imshow("image_highcontrast", image_highcontrast)
 
     # Thresholding the image
@@ -197,7 +197,7 @@ def findboxes(image, verbose=False):
 
     # Invert the image
     img_bin = 255-img_bin
-    if verbose:
+    if verbosity >= 2:
         cv2.imshow("Image_bin",img_bin)
 
     # Defining a kernel length
@@ -213,12 +213,12 @@ def findboxes(image, verbose=False):
     # Morphological operation to detect vertical lines from an image
     img_temp1 = cv2.erode(img_bin, vertical_kernel, iterations=3)
     vertical_lines_img = cv2.dilate(img_temp1, vertical_kernel, iterations=3)
-    if verbose:
+    if verbosity >= 2:
         cv2.imshow("vertical_lines.jpg",vertical_lines_img)
     # Morphological operation to detect horizontal lines from an image
     img_temp2 = cv2.erode(img_bin, hori_kernel, iterations=3)
     horizontal_lines_img = cv2.dilate(img_temp2, hori_kernel, iterations=3)
-    if verbose:
+    if verbosity >= 2:
         cv2.imshow("horizontal_lines.jpg",horizontal_lines_img)
 
     # Weighting parameters, this will decide the quantity of an image to be added to make a new image.
@@ -228,7 +228,8 @@ def findboxes(image, verbose=False):
     img_binary_boxes = cv2.addWeighted(vertical_lines_img, alpha, horizontal_lines_img, beta, 0.0)
     img_binary_boxes = cv2.erode(~img_binary_boxes, kernel, iterations=2)
     (thresh, img_binary_boxes) = cv2.threshold(img_binary_boxes, 128,255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
-    cv2.imshow("img_binary_boxes", img_binary_boxes)
+    if verbosity >= 1:
+        cv2.imshow("img_binary_boxes", img_binary_boxes)
 
     # Find contours for image, which will detect all the boxes
     contours, hierarchy = cv2.findContours(img_binary_boxes, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -254,14 +255,15 @@ def findboxes(image, verbose=False):
             cv2.rectangle(img_annotated_boxes, (x,y), (x+w,y+h), color, 1)
             cv2.putText(img_annotated_boxes, str(idx), (x,y+h), cv2.FONT_HERSHEY_PLAIN, 0.8, color)
     
-    cv2.imshow("annotated boxes", img_annotated_boxes)
+    if verbosity >= 1:
+        cv2.imshow("annotated boxes", img_annotated_boxes)
 
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Trying to detect boxes on an image.')
     parser.add_argument('--imgloc', '-i', default='images/1_300_400.png', help='the (single) input image\'s location')
-    parser.add_argument('--verbose', '-v', help='increase output verbosity', action='store_true')    
+    parser.add_argument('--verbose', '-v', help='increase output verbosity', action='count', default=0)    
     args = parser.parse_args()
     image = cv2.imread(args.imgloc)
 

@@ -133,7 +133,7 @@ def detect_corners_from_contour(canvas, cnt):
 
     return approx_corners, canvas
 
-def correct_skew(image, verbose=False):
+def correct_skew(image, verbosity=0):
     """
     Skew correction using homography and corner detection using contour points
     Returns: corrected image
@@ -142,24 +142,24 @@ def correct_skew(image, verbose=False):
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
     filtered_image = apply_filter(image)
-    if verbose:
+    if verbosity >= 2:
         plt.imshow(cv2.cvtColor(filtered_image, cv2.COLOR_BGR2RGB))
         plt.title('Filtered Image')
         plt.show()
     threshold_image = apply_threshold(filtered_image)
-    if verbose:
+    if verbosity >= 2:
         plt.imshow(cv2.cvtColor(threshold_image, cv2.COLOR_BGR2RGB))
         plt.title('After applying OTSU threshold')
         plt.show()
 
     cnv, largest_contour = detect_contour(threshold_image, image.shape)
-    if verbose:
+    if verbosity >= 2:
         plt.title('Largest Contour')
         plt.imshow(cnv)
         plt.show()
     corners, canvas = detect_corners_from_contour(cnv, largest_contour)
     
-    if verbose:
+    if verbosity >= 2:
         plt.imshow(canvas)
         plt.title('Corner Points: Douglas-Peucker')
         plt.show()
@@ -168,7 +168,7 @@ def correct_skew(image, verbose=False):
 
     src = np.float32(corners)
     un_warped = unwarp(image, src, destination_points)
-    if verbose:
+    if verbosity >= 2:
         _, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 8))
         # f.subplots_adjust(hspace=.2, wspace=.05)
         ax1.imshow(image)
@@ -187,7 +187,7 @@ def correct_skew(image, verbose=False):
     cropped = un_warped[0:h, 0:w]
     _, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 8))
     # f.subplots_adjust(hspace=.2, wspace=.05)
-    if verbose:
+    if verbosity >= 2:
         ax1.imshow(un_warped)
         ax2.imshow(cropped)
         plt.show()
@@ -198,12 +198,13 @@ def correct_skew(image, verbose=False):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Trying to detect boxes on an image.')
     parser.add_argument('--imgloc', '-i', default='images/1_notear_300_400.png', help='the (single) input image\'s location')
-    parser.add_argument('--verbose', '-v', help='increase output verbosity', action='store_true')    
+    parser.add_argument('--verbose', '-v', help='increase output verbosity', action='count', default=0)    
     args = parser.parse_args()
     image = cv2.imread(args.imgloc)
     cv2.imshow('original image', image)
     
     corrected_image = correct_skew(image, args.verbose)
-    cv2.imshow("corrected image", corrected_image)
+    if args.verbose >= 1:
+        cv2.imshow("corrected image", corrected_image)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
