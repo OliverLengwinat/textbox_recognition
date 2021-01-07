@@ -1,0 +1,7 @@
+code_examples/
+venv/
+run_venv.sh
+*Zone.Identifier
+*.save
+.vscode/
+.idea/
