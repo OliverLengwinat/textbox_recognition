@@ -203,18 +203,18 @@ def findboxes(image, verbose=False):
     # Defining a kernel length
     kernel_length = np.array(image).shape[1]//80*MIN_EDGE_LENGTH
 
-    # A verticle kernel of (1 X kernel_length), which will detect all the verticle lines from the image.
-    verticle_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, kernel_length))
+    # A vertical kernel of (1 X kernel_length), which will detect all the vertical lines from the image.
+    vertical_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, kernel_length))
     # A horizontal kernel of (kernel_length X 1), which will help to detect all the horizontal line from the image.
     hori_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (kernel_length, 1))
     # A kernel of (3 X 3) ones.
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
 
     # Morphological operation to detect vertical lines from an image
-    img_temp1 = cv2.erode(img_bin, verticle_kernel, iterations=3)
-    verticle_lines_img = cv2.dilate(img_temp1, verticle_kernel, iterations=3)
+    img_temp1 = cv2.erode(img_bin, vertical_kernel, iterations=3)
+    vertical_lines_img = cv2.dilate(img_temp1, vertical_kernel, iterations=3)
     if verbose:
-        cv2.imshow("verticle_lines.jpg",verticle_lines_img)
+        cv2.imshow("vertical_lines.jpg",vertical_lines_img)
     # Morphological operation to detect horizontal lines from an image
     img_temp2 = cv2.erode(img_bin, hori_kernel, iterations=3)
     horizontal_lines_img = cv2.dilate(img_temp2, hori_kernel, iterations=3)
@@ -225,7 +225,7 @@ def findboxes(image, verbose=False):
     alpha = 0.5
     beta = 1.0 - alpha
     # This function helps to add two image with specific weight parameter to get a third image as summation of two image.
-    img_binary_boxes = cv2.addWeighted(verticle_lines_img, alpha, horizontal_lines_img, beta, 0.0)
+    img_binary_boxes = cv2.addWeighted(vertical_lines_img, alpha, horizontal_lines_img, beta, 0.0)
     img_binary_boxes = cv2.erode(~img_binary_boxes, kernel, iterations=2)
     (thresh, img_binary_boxes) = cv2.threshold(img_binary_boxes, 128,255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
     cv2.imshow("img_binary_boxes", img_binary_boxes)
