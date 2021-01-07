@@ -55,24 +55,6 @@ def unwarp(img, src, dst):
     print('\nThe homography matrix is: \n', H)
     un_warped = cv2.warpPerspective(img, H, (w, h), flags=cv2.INTER_LINEAR)
 
-    # plot
-    if args.verbose:
-        _, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 8))
-        # f.subplots_adjust(hspace=.2, wspace=.05)
-        ax1.imshow(img)
-        ax1.set_title('Original Image')
-
-        x = [src[0][0], src[2][0], src[3][0], src[1][0], src[0][0]]
-        y = [src[0][1], src[2][1], src[3][1], src[1][1], src[0][1]]
-
-        ax2.imshow(img)
-        ax2.plot(x, y, color='yellow', linewidth=3)
-        ax2.set_ylim([h, 0])
-        ax2.set_xlim([0, w])
-        ax2.set_title('Target Area')
-
-        plt.show()
-
     return un_warped
 
 def apply_filter(image):
@@ -88,10 +70,7 @@ def apply_filter(image):
     gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
     kernel = np.ones((5, 5), np.float32) / 15
     filtered = cv2.filter2D(gray, -1, kernel)
-    if args.verbose:
-        plt.imshow(cv2.cvtColor(filtered, cv2.COLOR_BGR2RGB))
-        plt.title('Filtered Image')
-        plt.show()
+    
     return filtered
 
 def apply_threshold(filtered):
@@ -106,11 +85,6 @@ def apply_threshold(filtered):
 
     """
     _, thresh = cv2.threshold(filtered, 250, 255, cv2.THRESH_OTSU)
-
-    if args.verbose:
-        plt.imshow(cv2.cvtColor(thresh, cv2.COLOR_BGR2RGB))
-        plt.title('After applying OTSU threshold')
-        plt.show()
 
     return thresh
 
@@ -130,10 +104,6 @@ def detect_contour(img, image_shape):
     contours, _hierarchy = cv2.findContours(img, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
     cnt = sorted(contours, key=cv2.contourArea, reverse=True)[0]
     cv2.drawContours(canvas, cnt, -1, (0, 255, 255), 3)
-    if args.verbose:
-        plt.title('Largest Contour')
-        plt.imshow(canvas)
-        plt.show()
 
     return canvas, cnt
 
@@ -161,13 +131,9 @@ def detect_corners_from_contour(canvas, cnt):
     # Rearranging the order of the corner points
     approx_corners = [approx_corners[i] for i in [0, 2, 1, 3]]
 
-    if args.verbose:
-        plt.imshow(canvas)
-        plt.title('Corner Points: Douglas-Peucker')
-        plt.show()
-    return approx_corners
+    return approx_corners, canvas
 
-def correct_skew(image):
+def correct_skew(image, verbose):
     """
     Skew correction using homography and corner detection using contour points
     Returns: corrected image
@@ -176,18 +142,52 @@ def correct_skew(image):
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
     filtered_image = apply_filter(image)
+    if verbose:
+        plt.imshow(cv2.cvtColor(filtered_image, cv2.COLOR_BGR2RGB))
+        plt.title('Filtered Image')
+        plt.show()
     threshold_image = apply_threshold(filtered_image)
+    if verbose:
+        plt.imshow(cv2.cvtColor(threshold_image, cv2.COLOR_BGR2RGB))
+        plt.title('After applying OTSU threshold')
+        plt.show()
 
     cnv, largest_contour = detect_contour(threshold_image, image.shape)
-    corners = detect_corners_from_contour(cnv, largest_contour)
+    if args.verbose:
+        plt.title('Largest Contour')
+        plt.imshow(cnv)
+        plt.show()
+    corners, canvas = detect_corners_from_contour(cnv, largest_contour)
+    
+    if verbose:
+        plt.imshow(canvas)
+        plt.title('Corner Points: Douglas-Peucker')
+        plt.show()
 
     destination_points, h, w = get_destination_points(corners)
-    un_warped = unwarp(image, np.float32(corners), destination_points)
+
+    src_corners = np.float32(corners)
+    un_warped = unwarp(image, src_corners, destination_points)
+    if verbose:
+        _, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 8))
+        # f.subplots_adjust(hspace=.2, wspace=.05)
+        ax1.imshow(image)
+        ax1.set_title('Original Image')
+        x = [src_corners[0][0], src_corners[2][0], src_corners[3][0], src_corners[1][0], src_corners[0][0]]
+        y = [src_corners[0][1], src_corners[2][1], src_corners[3][1], src_corners[1][1], src_corners[0][1]]
+        ax2.imshow(image)
+        ax2.plot(x, y, color='yellow', linewidth=3)
+        h, w = image.shape[:2]
+        ax2.set_ylim([h, 0])
+        ax2.set_xlim([0, w])
+        ax2.set_title('Target Area')
+
+        plt.show()
 
     cropped = un_warped[0:h, 0:w]
     _, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 8))
     # f.subplots_adjust(hspace=.2, wspace=.05)
-    if args.verbose:
+    if verbose:
         ax1.imshow(un_warped)
         ax2.imshow(cropped)
         plt.show()
@@ -203,7 +203,7 @@ if __name__ == '__main__':
     image = cv2.imread(args.imgloc)
     cv2.imshow('original image', image)
     
-    corrected_image = correct_skew(image)
+    corrected_image = correct_skew(image, args.verbose)
     cv2.imshow("corrected image", corrected_image)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
