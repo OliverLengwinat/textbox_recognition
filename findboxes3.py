@@ -185,18 +185,20 @@ def sort_contours(cnts, method="left-to-right"):
     return (cnts, boundingBoxes)
 
 # the main function
-def findboxes(image):
+def findboxes(image, verbose=False):
     mask = get_color_mask(image)
     image_highcontrast = combine_process(image, mask)
 
-    cv2.imshow("image_highcontrast", image_highcontrast)
+    if verbose:
+        cv2.imshow("image_highcontrast", image_highcontrast)
 
     # Thresholding the image
     thresh, img_bin = cv2.threshold(image_highcontrast, 128, 255,cv2.THRESH_BINARY|     cv2.THRESH_OTSU)
 
     # Invert the image
     img_bin = 255-img_bin
-    cv2.imshow("Image_bin",img_bin)
+    if verbose:
+        cv2.imshow("Image_bin",img_bin)
 
     # Defining a kernel length
     kernel_length = np.array(image).shape[1]//80*MIN_EDGE_LENGTH
@@ -211,11 +213,13 @@ def findboxes(image):
     # Morphological operation to detect vertical lines from an image
     img_temp1 = cv2.erode(img_bin, verticle_kernel, iterations=3)
     verticle_lines_img = cv2.dilate(img_temp1, verticle_kernel, iterations=3)
-    cv2.imshow("verticle_lines.jpg",verticle_lines_img)
+    if verbose:
+        cv2.imshow("verticle_lines.jpg",verticle_lines_img)
     # Morphological operation to detect horizontal lines from an image
     img_temp2 = cv2.erode(img_bin, hori_kernel, iterations=3)
     horizontal_lines_img = cv2.dilate(img_temp2, hori_kernel, iterations=3)
-    cv2.imshow("horizontal_lines.jpg",horizontal_lines_img)
+    if verbose:
+        cv2.imshow("horizontal_lines.jpg",horizontal_lines_img)
 
     # Weighting parameters, this will decide the quantity of an image to be added to make a new image.
     alpha = 0.5
@@ -248,10 +252,11 @@ def findboxes(image):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Trying to detect boxes on an image.')
     parser.add_argument('--imgloc', '-i', default='images/1_300_400.png', help='the (single) input image\'s location')
+    parser.add_argument('--verbose', '-v', help='increase output verbosity', action='store_true')    
     args = parser.parse_args()
     image = cv2.imread(args.imgloc)
 
-    findboxes(image)
+    findboxes(image, args.verbose)
 
     cv2.waitKey(0)
     cv2.destroyAllWindows()
