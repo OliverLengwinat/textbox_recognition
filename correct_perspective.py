@@ -170,25 +170,15 @@ def correct_skew(image, verbose):
 
     destination_points, h, w = get_destination_points(corners)
 
-<<<<<<< HEAD
     src = np.float32(corners)
     un_warped = unwarp(image, src, destination_points)
-=======
-    src_corners = np.float32(corners)
-    un_warped = unwarp(image, src_corners, destination_points)
->>>>>>> 3ed80b71d021e9594f8c6b0f59d6d5e2f1b4ea2f
     if verbose:
         _, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 8))
         # f.subplots_adjust(hspace=.2, wspace=.05)
         ax1.imshow(image)
         ax1.set_title('Original Image')
-<<<<<<< HEAD
         x = [src[0][0], src[2][0], src[3][0], src[1][0], src[0][0]]
         y = [src[0][1], src[2][1], src[3][1], src[1][1], src[0][1]]
-=======
-        x = [src_corners[0][0], src_corners[2][0], src_corners[3][0], src_corners[1][0], src_corners[0][0]]
-        y = [src_corners[0][1], src_corners[2][1], src_corners[3][1], src_corners[1][1], src_corners[0][1]]
->>>>>>> 3ed80b71d021e9594f8c6b0f59d6d5e2f1b4ea2f
         ax2.imshow(image)
         ax2.plot(x, y, color='yellow', linewidth=3)
         h, w = image.shape[:2]
