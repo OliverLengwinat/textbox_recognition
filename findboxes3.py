@@ -235,6 +235,8 @@ def findboxes(image, verbose=False):
     # Sort all the contours by top to bottom.
     (contours, boundingBoxes) = sort_contours(contours, method="top-to-bottom")
 
+    #img_annotated_boxes = img_binary_boxes
+    img_annotated_boxes = image
     idx = 0
     for c in contours:
         # Returns the location and width,height for every contour
@@ -247,6 +249,13 @@ def findboxes(image, verbose=False):
             new_img_hc = image_highcontrast[y:y+h, x:x+w]
             cv2.imwrite('output/'+str(idx) + '.png', new_img)
             cv2.imwrite('output_high_contrast/'+str(idx) + '.png', new_img_hc)
+
+            color = (255, 0, 0)
+            cv2.rectangle(img_annotated_boxes, (x,y), (x+w,y+h), color, 1)
+            cv2.putText(img_annotated_boxes, str(idx), (x,y+h), cv2.FONT_HERSHEY_PLAIN, 0.8, color)
+    
+    cv2.imshow("annotated boxes", img_annotated_boxes)
+
 
 
 if __name__ == '__main__':
