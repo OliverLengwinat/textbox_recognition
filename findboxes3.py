@@ -6,10 +6,12 @@ import cv2
 import numpy as np
 
 # minimum size of extracted boxes
-MIN_WIDTH = 12
-MIN_HEIGHT = 4
-MIN_ASP_RATIO = 2.1
-MAX_ASP_RATIO = 2.7
+MIN_WIDTH = 20
+MAX_WIDTH = 50
+MIN_HEIGHT = 15
+MAX_HEIGHT = 22
+MIN_ASP_RATIO = 1.8
+MAX_ASP_RATIO = 4.0
 
 # minimum length of straight lines to extract (unit unknown)
 MIN_EDGE_LENGTH = 4
@@ -244,7 +246,7 @@ def findboxes(image, verbosity=0):
         x, y, w, h = cv2.boundingRect(c)
 
         # If the box height is greater then MIN_HEIGHT, widht is > MIN_HEIGHT, then only save it as a box in output folder.
-        if (w > MIN_WIDTH and h > MIN_HEIGHT) and MIN_ASP_RATIO < w/h < MAX_ASP_RATIO:
+        if (MIN_WIDTH < w < MAX_WIDTH and MIN_HEIGHT < h < MAX_HEIGHT) and MIN_ASP_RATIO < w/h < MAX_ASP_RATIO:
             idx += 1
             new_img = image[y:y+h, x:x+w]
             new_img_hc = image_highcontrast[y:y+h, x:x+w]
