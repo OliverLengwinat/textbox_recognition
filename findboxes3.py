@@ -3,6 +3,7 @@
 
 import argparse
 import cv2
+from math import ceil, floor
 import numpy as np
 
 # minimum size of extracted boxes
@@ -246,8 +247,8 @@ def findboxes(image, verbosity=0):
         x, y, w, h = cv2.boundingRect(c)
 
         # Only save the box in output folder if it meets these dimension criteria
-        if (round(MIN_WIDTH*image.shape[1]) < w < round(MAX_WIDTH*image.shape[1]) and 
-            round(MIN_HEIGHT*image.shape[0]) < h < round(MAX_HEIGHT*image.shape[0]) and 
+        if (floor(MIN_WIDTH*image.shape[1]) < w < ceil(MAX_WIDTH*image.shape[1]) and 
+            floor(MIN_HEIGHT*image.shape[0]) < h < ceil(MAX_HEIGHT*image.shape[0]) and 
             MIN_ASP_RATIO < w/h < MAX_ASP_RATIO):
             idx += 1
             new_img = image[y:y+h, x:x+w]
