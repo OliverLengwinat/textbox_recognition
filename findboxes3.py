@@ -6,10 +6,10 @@ import cv2
 import numpy as np
 
 # minimum size of extracted boxes
-MIN_WIDTH = 20
-MAX_WIDTH = 50
-MIN_HEIGHT = 15
-MAX_HEIGHT = 22
+MIN_WIDTH = 0.04
+MAX_WIDTH = 0.10
+MIN_HEIGHT = 0.02
+MAX_HEIGHT = 0.04
 MIN_ASP_RATIO = 1.8
 MAX_ASP_RATIO = 4.0
 
@@ -242,11 +242,13 @@ def findboxes(image, verbosity=0):
     img_annotated_boxes = image
     idx = 0
     for c in contours:
-        # Returns the location and width,height for every contour
+        # Return the location and width,height for every contour
         x, y, w, h = cv2.boundingRect(c)
 
-        # If the box height is greater then MIN_HEIGHT, widht is > MIN_HEIGHT, then only save it as a box in output folder.
-        if (MIN_WIDTH < w < MAX_WIDTH and MIN_HEIGHT < h < MAX_HEIGHT) and MIN_ASP_RATIO < w/h < MAX_ASP_RATIO:
+        # Only save the box in output folder if it meets these dimension criteria
+        if (round(MIN_WIDTH*image.shape[1]) < w < round(MAX_WIDTH*image.shape[1]) and 
+            round(MIN_HEIGHT*image.shape[0]) < h < round(MAX_HEIGHT*image.shape[0]) and 
+            MIN_ASP_RATIO < w/h < MAX_ASP_RATIO):
             idx += 1
             new_img = image[y:y+h, x:x+w]
             new_img_hc = image_highcontrast[y:y+h, x:x+w]
@@ -257,6 +259,7 @@ def findboxes(image, verbosity=0):
             cv2.rectangle(img_annotated_boxes, (x,y), (x+w,y+h), color, 1)
             cv2.putText(img_annotated_boxes, str(idx), (x,y+h), cv2.FONT_HERSHEY_PLAIN, 0.8, color)
     
+    print("{} boxes detected".format(idx))
     if verbosity >= 1:
         cv2.imshow("annotated boxes", img_annotated_boxes)
 
