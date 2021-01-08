@@ -11,7 +11,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     image = cv2.imread(args.imgloc)
-    cv2.imshow('original image', image)
+    if args.verbose >= 1:
+        cv2.imshow('original image', image)
 
     # correct skew/perspective
     corrected_image = correct_perspective.correct_skew(image, args.verbose)
@@ -22,5 +23,6 @@ if __name__ == '__main__':
     findboxes3.findboxes(corrected_image, args.verbose)
 
     # clean up
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    if args.verbose >= 1:
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
