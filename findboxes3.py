@@ -12,7 +12,7 @@ MAX_WIDTH = 0.10
 MIN_HEIGHT = 0.02
 MAX_HEIGHT = 0.04
 MIN_ASP_RATIO = 1.8
-MAX_ASP_RATIO = 4.0
+MAX_ASP_RATIO = 3.0
 
 # minimum length of straight lines to extract (unit unknown)
 MIN_EDGE_LENGTH = 4
@@ -215,12 +215,13 @@ def findboxes(image, verbosity=0):
 
     # Morphological operation to detect vertical lines from an image
     img_temp1 = cv2.erode(img_bin, vertical_kernel, iterations=3)
-    vertical_lines_img = cv2.dilate(img_temp1, vertical_kernel, iterations=3)
+    # dilation is done in more iterations than erosion to increase line length
+    vertical_lines_img = cv2.dilate(img_temp1, vertical_kernel, iterations=7)
     if verbosity >= 2:
         cv2.imshow("vertical_lines.jpg",vertical_lines_img)
     # Morphological operation to detect horizontal lines from an image
     img_temp2 = cv2.erode(img_bin, hori_kernel, iterations=3)
-    horizontal_lines_img = cv2.dilate(img_temp2, hori_kernel, iterations=3)
+    horizontal_lines_img = cv2.dilate(img_temp2, hori_kernel, iterations=4)
     if verbosity >= 2:
         cv2.imshow("horizontal_lines.jpg",horizontal_lines_img)
 
@@ -260,7 +261,7 @@ def findboxes(image, verbosity=0):
             cv2.rectangle(img_annotated_boxes, (x,y), (x+w,y+h), color, 1)
             cv2.putText(img_annotated_boxes, str(idx), (x,y+h), cv2.FONT_HERSHEY_PLAIN, 0.8, color)
     
-    print("{} boxes detected".format(idx))
+    print("{} boxes detected (of 114)".format(idx))
     if verbosity >= 1:
         cv2.imshow("annotated boxes", img_annotated_boxes)
 
