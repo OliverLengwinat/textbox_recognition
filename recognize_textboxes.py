@@ -1,7 +1,7 @@
 import argparse
 import cv2
 
-import correct_perspective, findboxes3
+import correct_perspective, findboxes
 
 if __name__ == '__main__':
     # arguments parsing
@@ -20,7 +20,7 @@ if __name__ == '__main__':
         cv2.imshow("corrected image", corrected_image)
 
     # detect and display lines and boxes
-    findboxes3.findboxes(corrected_image, args.verbose)
+    findboxes.findboxes(corrected_image, args.verbose)
 
     # clean up
     if args.verbose >= 1:
