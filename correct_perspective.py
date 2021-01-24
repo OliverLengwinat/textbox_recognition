@@ -200,10 +200,10 @@ if __name__ == '__main__':
     parser.add_argument('--imgloc', '-i', default='images/1_notear_300_400.png', help='the (single) input image\'s location')
     parser.add_argument('--verbose', '-v', help='increase output verbosity', action='count', default=0)    
     args = parser.parse_args()
-    image = cv2.imread(args.imgloc)
-    cv2.imshow('original image', image)
+    input_image = cv2.imread(args.imgloc)
+    cv2.imshow('original image', input_image)
     
-    corrected_image = correct_skew(image, args.verbose)
+    corrected_image = correct_skew(input_image, args.verbose)
     if args.verbose >= 1:
         cv2.imshow("corrected image", corrected_image)
     cv2.waitKey(0)

@@ -38,8 +38,7 @@ def postprocess(image):
     return image
 
 def get_color_mask(image):
-    # make mask and inverted mask for colored areas
-    # ToDo: remove color part?
+    # make mask and inverted mask for colored areas ToDo: remove color part?
     b,g,r = cv2.split(cv2.blur(image,(5,5)))
     np.seterr(divide='ignore', invalid='ignore') # 0/0 --> 0
     m = (np.fmin(np.fmin(b, g), r) / np.fmax(np.fmax(b, g), r)) * 255
@@ -125,7 +124,7 @@ def combine_block(img_in, mask):
     # Now we use good old OTSU binarization to get a rough estimation
     # of foreground and background regions.
     img_in_idx = img_in[idx]
-    ret3,th3 = cv2.threshold(img_in[idx],0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+    _ret3, th3 = cv2.threshold(img_in[idx],0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
 
     # Then we normalize the stuffs and apply sigmoid to gradually
     # combine the stuffs.
@@ -196,7 +195,7 @@ def findboxes(image, verbosity=0):
         cv2.imshow("image_highcontrast", image_highcontrast)
 
     # Thresholding the image
-    thresh, img_bin = cv2.threshold(image_highcontrast, 128, 255,cv2.THRESH_BINARY|     cv2.THRESH_OTSU)
+    _thresh, img_bin = cv2.threshold(image_highcontrast, 128, 255,cv2.THRESH_BINARY|     cv2.THRESH_OTSU)
 
     # Invert the image
     img_bin = 255-img_bin
@@ -231,14 +230,14 @@ def findboxes(image, verbosity=0):
     # This function helps to add two image with specific weight parameter to get a third image as summation of two image.
     img_binary_boxes = cv2.addWeighted(vertical_lines_img, alpha, horizontal_lines_img, beta, 0.0)
     img_binary_boxes = cv2.erode(~img_binary_boxes, kernel, iterations=2)
-    (thresh, img_binary_boxes) = cv2.threshold(img_binary_boxes, 128,255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+    _thresh, img_binary_boxes = cv2.threshold(img_binary_boxes, 128,255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
     if verbosity >= 1:
         cv2.imshow("img_binary_boxes", img_binary_boxes)
 
     # Find contours for image, which will detect all the boxes
-    contours, hierarchy = cv2.findContours(img_binary_boxes, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    contours, _hierarchy = cv2.findContours(img_binary_boxes, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     # Sort all the contours by top to bottom.
-    (contours, boundingBoxes) = sort_contours(contours, method="top-to-bottom")
+    (contours, _boundingBoxes) = sort_contours(contours, method="top-to-bottom")
 
     #img_annotated_boxes = img_binary_boxes
     img_annotated_boxes = image
@@ -272,9 +271,9 @@ if __name__ == '__main__':
     parser.add_argument('--imgloc', '-i', default='images/1_300_400.png', help='the (single) input image\'s location')
     parser.add_argument('--verbose', '-v', help='increase output verbosity', action='count', default=0)    
     args = parser.parse_args()
-    image = cv2.imread(args.imgloc)
+    input_image = cv2.imread(args.imgloc)
 
-    findboxes(image, args.verbose)
+    findboxes(input_image, args.verbose)
 
     cv2.waitKey(0)
     cv2.destroyAllWindows()
