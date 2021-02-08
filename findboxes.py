@@ -162,7 +162,7 @@ def combine_process(img, mask):
     image_out = combine_postprocess(image_out)
     return image_out
 
-def round_big(number, tolerance=10):
+def round_big(number, tolerance):
     #round to precision values > 1
     return int(number/tolerance)*tolerance
 
@@ -171,8 +171,10 @@ def sort_contours(cnts):
 
     # construct the list of bounding boxes and sort them from top to bottom
     boundingBoxes = [cv2.boundingRect(c) for c in cnts]
+    # sort by y coordinate
     (cnts, boundingBoxes) = zip(*sorted(zip(cnts, boundingBoxes),
-                                        key=lambda b: round_big(b[1][1], tolerance=10)))
+                                        key=lambda b: b[1][1]))
+    # sort by x coordinate (rounded)
     (cnts, boundingBoxes) = zip(*sorted(zip(cnts, boundingBoxes),
                                         key=lambda b: round_big(b[1][0], tolerance=15)))
 
