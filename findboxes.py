@@ -2,6 +2,7 @@
 # box detection from https://medium.com/coinmonks/a-box-detection-algorithm-for-any-image-containing-boxes-756c15d7ed26
 
 import argparse
+from collections import Counter
 import cv2
 from math import ceil, floor
 import numpy as np
@@ -242,9 +243,13 @@ def findboxes(image, verbosity=0):
     #img_annotated_boxes = img_binary_boxes
     img_annotated_boxes = image
     idx = 0
+    xs = []
+    ys = []
     for c in contours:
         # Return the location and width,height for every contour
         x, y, w, h = cv2.boundingRect(c)
+        xs.append(x)
+        ys.append(y)
 
         # Only save the box in output folder if it meets these dimension criteria
         if (floor(MIN_WIDTH*image.shape[1]) < w < ceil(MAX_WIDTH*image.shape[1]) and 
@@ -259,6 +264,16 @@ def findboxes(image, verbosity=0):
             color = (255, 0, 0)
             cv2.rectangle(img_annotated_boxes, (x,y), (x+w,y+h), color, 1)
             cv2.putText(img_annotated_boxes, str(idx), (x,y+h), cv2.FONT_HERSHEY_PLAIN, 0.8, color)
+    
+    xs_occurences = list(zip(Counter(xs).keys(), Counter(xs).values()))
+    xs_list = sorted(xs_occurences, key=lambda item: item[1], reverse=True)
+    ys_occurences = list(zip(Counter(ys).keys(), Counter(ys).values()))
+    ys_list = sorted(ys_occurences, key=lambda item: item[1], reverse=True)
+
+    print(sorted([element[0] for element in xs_list][0:7])) # first 6
+    print(sorted([element[0] for element in ys_list][0:20])) # first 19
+    print(sorted([element[0] for element in ys_list][20:])) # after first 19
+
     
     print("{} boxes detected (of 114)".format(idx))
     if verbosity >= 1:
