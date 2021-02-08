@@ -248,13 +248,33 @@ def findboxes(image, verbosity=0):
             MIN_ASP_RATIO < w/h < MAX_ASP_RATIO):
             idx += 1
             new_img = image[y:y+h, x:x+w]
-            new_img_hc = image_highcontrast[y:y+h, x:x+w]
+            new_img_bin = img_bin[y:y+h, x:x+w]
             cv2.imwrite('output/'+str(idx) + '.png', new_img)
-            cv2.imwrite('output_high_contrast/'+str(idx) + '.png', new_img_hc)
+            cv2.imwrite('output_binary/'+str(idx) + '.png', new_img_bin)
 
+            # display box on image
             color = (255, 0, 0)
             cv2.rectangle(img_annotated_boxes, (x,y), (x+w,y+h), color, 1)
             cv2.putText(img_annotated_boxes, str(idx), (x,y+h), cv2.FONT_HERSHEY_PLAIN, 0.8, color)
+
+            # separate numbers
+                
+            # find connected shapes
+            num_labels, labels = cv2.connectedComponents(new_img_bin)
+            print("{} shapes in detected box".format(num_labels-1))
+
+            for i in range(1, num_labels):
+                # empty canvas
+                separated_img = np.uint8(np.zeros_like(labels))
+
+                # draw white where current shape is detected
+                separated_img[labels==i] = 255
+                # apply to all channels
+                separated_img[:,:] = separated_img
+
+                # cv2.imshow('shape '+str(i), separated_img)
+                # save image
+                cv2.imwrite('output_binary/'+str(idx) + '_' + str(i) + '.png', separated_img)
     
     print("{} boxes detected (of 114)".format(idx))
     if verbosity >= 1:
