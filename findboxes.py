@@ -2,7 +2,6 @@
 # box detection from https://medium.com/coinmonks/a-box-detection-algorithm-for-any-image-containing-boxes-756c15d7ed26
 
 import argparse
-from collections import Counter
 import cv2
 from math import ceil, floor
 import numpy as np
@@ -163,26 +162,19 @@ def combine_process(img, mask):
     image_out = combine_postprocess(image_out)
     return image_out
 
+def round_big(number, tolerance=10):
+    #round to precision values > 1
+    return int(number/tolerance)*tolerance
 
-def sort_contours(cnts, method="left-to-right"):
-    # initialize the reverse flag and sort index
-    reverse = False
-    i = 0
+def sort_contours(cnts):
+    #sort boxes by column then row while ignoring positional faults within tolerance
 
-    # handle if we need to sort in reverse
-    if method == "right-to-left" or method == "bottom-to-top":
-        reverse = True
-
-    # handle if we are sorting against the y-coordinate rather than
-    # the x-coordinate of the bounding box
-    if method == "top-to-bottom" or method == "bottom-to-top":
-        i = 1
-
-    # construct the list of bounding boxes and sort them from top to
-    # bottom
+    # construct the list of bounding boxes and sort them from top to bottom
     boundingBoxes = [cv2.boundingRect(c) for c in cnts]
     (cnts, boundingBoxes) = zip(*sorted(zip(cnts, boundingBoxes),
-                                        key=lambda b: b[1][i], reverse=reverse))
+                                        key=lambda b: round_big(b[1][1], tolerance=10)))
+    (cnts, boundingBoxes) = zip(*sorted(zip(cnts, boundingBoxes),
+                                        key=lambda b: round_big(b[1][0], tolerance=15)))
 
     # return the list of sorted contours and bounding boxes
     return (cnts, boundingBoxes)
@@ -238,18 +230,15 @@ def findboxes(image, verbosity=0):
     # Find contours for image, which will detect all the boxes
     contours, _hierarchy = cv2.findContours(img_binary_boxes, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     # Sort all the contours by top to bottom.
-    (contours, _boundingBoxes) = sort_contours(contours, method="top-to-bottom")
+    (contours, _boundingBoxes) = sort_contours(contours)
 
     #img_annotated_boxes = img_binary_boxes
     img_annotated_boxes = image
     idx = 0
-    xs = []
-    ys = []
+
     for c in contours:
         # Return the location and width,height for every contour
         x, y, w, h = cv2.boundingRect(c)
-        xs.append(x)
-        ys.append(y)
 
         # Only save the box in output folder if it meets these dimension criteria
         if (floor(MIN_WIDTH*image.shape[1]) < w < ceil(MAX_WIDTH*image.shape[1]) and 
@@ -264,16 +253,6 @@ def findboxes(image, verbosity=0):
             color = (255, 0, 0)
             cv2.rectangle(img_annotated_boxes, (x,y), (x+w,y+h), color, 1)
             cv2.putText(img_annotated_boxes, str(idx), (x,y+h), cv2.FONT_HERSHEY_PLAIN, 0.8, color)
-    
-    xs_occurences = list(zip(Counter(xs).keys(), Counter(xs).values()))
-    xs_list = sorted(xs_occurences, key=lambda item: item[1], reverse=True)
-    ys_occurences = list(zip(Counter(ys).keys(), Counter(ys).values()))
-    ys_list = sorted(ys_occurences, key=lambda item: item[1], reverse=True)
-
-    print(sorted([element[0] for element in xs_list][0:7])) # first 6
-    print(sorted([element[0] for element in ys_list][0:20])) # first 19
-    print(sorted([element[0] for element in ys_list][20:])) # after first 19
-
     
     print("{} boxes detected (of 114)".format(idx))
     if verbosity >= 1:
