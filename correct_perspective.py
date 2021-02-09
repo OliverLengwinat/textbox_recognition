@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 
-def get_destination_points(corners):
+def get_destination_points(corners, verbosity=0):
     """
     -Get destination points from corners of warped images
     -Approximating height and width of the rectangle: we take maximum of the 2 widths and 2 heights
@@ -30,15 +30,18 @@ def get_destination_points(corners):
 
     destination_corners = np.float32([(0, 0), (w - 1, 0), (0, h - 1), (w - 1, h - 1)])
 
-    print('\nThe destination points are: \n')
-    for index, c in enumerate(destination_corners):
-        character = chr(65 + index) + "'"
-        print(character, ':', c)
+    if verbosity >= 2:
+        print('\nThe destination points are: \n')
+        for index, c in enumerate(destination_corners):
+            character = chr(65 + index) + "'"
+            print(character, ':', c)
 
-    print('\nThe approximated height and width of the original image is: \n', (h, w))
+    if verbosity >= 2:
+        print('\nThe approximated height and width of the original image is: \n', (h, w))
+    
     return destination_corners, h, w
 
-def unwarp(img, src, dst):
+def unwarp(img, src, dst, verbosity=0):
     """
 
     Args:
@@ -52,7 +55,8 @@ def unwarp(img, src, dst):
     """
     h, w = img.shape[:2]
     H, _ = cv2.findHomography(src, dst, method=cv2.RANSAC, ransacReprojThreshold=3.0)
-    print('\nThe homography matrix is: \n', H)
+    if verbosity >= 2:
+        print('\nThe homography matrix is: \n', H)
     un_warped = cv2.warpPerspective(img, H, (w, h), flags=cv2.INTER_LINEAR)
 
     return un_warped
@@ -88,7 +92,7 @@ def apply_threshold(filtered):
 
     return thresh
 
-def detect_contour(img, image_shape):
+def detect_contour(img, image_shape, verbosity=0):
     """
 
     Args:
@@ -107,7 +111,7 @@ def detect_contour(img, image_shape):
 
     return canvas, cnt
 
-def detect_corners_from_contour(canvas, cnt):
+def detect_corners_from_contour(canvas, cnt, verbosity=0):
     """
     Detecting corner points form contours using cv2.approxPolyDP()
     Args:
@@ -122,11 +126,12 @@ def detect_corners_from_contour(canvas, cnt):
     approx_corners = cv2.approxPolyDP(cnt, epsilon, True)
     cv2.drawContours(canvas, approx_corners, -1, (255, 255, 0), 10)
     approx_corners = sorted(np.concatenate(approx_corners).tolist())
-    print('\nThe corner points are ...\n')
-    for index, c in enumerate(approx_corners):
-        character = chr(65 + index)
-        print(character, ':', c)
-        cv2.putText(canvas, character, tuple(c), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+    if verbosity >= 2:
+        print('\nThe corner points are ...\n')
+        for index, c in enumerate(approx_corners):
+            character = chr(65 + index)
+            print(character, ':', c)
+            cv2.putText(canvas, character, tuple(c), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
 
     # Rearranging the order of the corner points
     approx_corners = [approx_corners[i] for i in [0, 2, 1, 3]]
@@ -152,22 +157,22 @@ def correct_skew(image, verbosity=0):
         plt.title('After applying OTSU threshold')
         plt.show()
 
-    cnv, largest_contour = detect_contour(threshold_image, image.shape)
+    cnv, largest_contour = detect_contour(threshold_image, image.shape, verbosity=verbosity)
     if verbosity >= 2:
         plt.title('Largest Contour')
         plt.imshow(cnv)
         plt.show()
-    corners, canvas = detect_corners_from_contour(cnv, largest_contour)
+    corners, canvas = detect_corners_from_contour(cnv, largest_contour, verbosity=verbosity)
     
     if verbosity >= 2:
         plt.imshow(canvas)
         plt.title('Corner Points: Douglas-Peucker')
         plt.show()
 
-    destination_points, h, w = get_destination_points(corners)
+    destination_points, h, w = get_destination_points(corners, verbosity=verbosity)
 
     src = np.float32(corners)
-    un_warped = unwarp(image, src, destination_points)
+    un_warped = unwarp(image, src, destination_points, verbosity=verbosity)
     if verbosity >= 2:
         _, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 8))
         # f.subplots_adjust(hspace=.2, wspace=.05)
