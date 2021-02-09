@@ -277,7 +277,6 @@ def findboxes(image, verbosity=0):
                 # apply to all channels
                 separated_img[:,:] = separated_img
 
-                # cv2.imshow('shape '+str(i), separated_img)
                 # save image
                 cv2.imwrite('output_binary/'+str(idx) + '_' + str(component_idx) + '.png', separated_img)
                 detected_digits[idx-1].append(separated_img)

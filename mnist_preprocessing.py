@@ -88,5 +88,5 @@ def mnist_preprocessing(img):
 
 
 def flatten(img):
-    # change shape to array as expected by classifier
+    # change shape to array with values between 0 and 1 as expected by classifier
     return img.flatten() / 255.0

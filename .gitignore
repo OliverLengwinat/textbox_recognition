@@ -8,3 +8,5 @@ run_venv.sh
 __pycache__/
 output/**
 output_binary/**
+output_digits/**
+MNIST_data/**

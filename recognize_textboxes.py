@@ -1,7 +1,8 @@
 import argparse
 import cv2
+from os import listdir, remove
 
-import correct_perspective, findboxes, mnist_preprocessing
+import correct_perspective, findboxes, mnist_preprocessing, train_mnist
 
 if __name__ == '__main__':
     # arguments parsing
@@ -23,12 +24,20 @@ if __name__ == '__main__':
     detected_digits = findboxes.findboxes(corrected_image, args.verbose)
 
     # MNIST preprocessing
+    # delete previous folder contents
+    files = listdir("output_digits")
+    for f in files:
+        remove("output_digits/"+f)
+
     for field_idx, field in enumerate(detected_digits):
         for digit_idx, digit in enumerate(field):
             digit_img_mnist = mnist_preprocessing.mnist_preprocessing(digit)
-            cv2.imshow("field "+str(field_idx+1)+", digit "+str(digit_idx+1), digit_img_mnist)
-            cv2.waitKey(0)
-            cv2.destroyAllWindows()
+            if args.verbose >=2:
+                cv2.imshow("field "+str(field_idx+1)+", digit "+str(digit_idx+1), digit_img_mnist)
+            cv2.imwrite("output_digits/field_"+str(field_idx+1)+"_digit_"+str(digit_idx+1)+".png", digit_img_mnist)
+
+    # get MNIST trained network
+    train_mnist.train_and_predict(listdir("output_digits"))
 
     # clean up
     if args.verbose >= 1:
