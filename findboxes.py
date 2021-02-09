@@ -183,6 +183,8 @@ def sort_contours(cnts):
 
 # the main function
 def findboxes(image, verbosity=0):
+    detected_digits = []
+
     mask = get_color_mask(image)
     image_highcontrast = combine_process(image, mask)
 
@@ -258,10 +260,13 @@ def findboxes(image, verbosity=0):
             cv2.putText(img_annotated_boxes, str(idx), (x,y+h), cv2.FONT_HERSHEY_PLAIN, 0.8, color)
 
             # separate numbers
-                
+            
+            detected_digits.append([])
+
             # find connected shapes
             num_labels, labels = cv2.connectedComponents(new_img_bin)
-            print("{} shapes in detected box".format(num_labels-1))
+            if verbosity >= 1:
+                print("{} shapes in detected box {}".format(num_labels-1), idx)
 
             for i in range(1, num_labels):
                 # empty canvas
@@ -275,6 +280,9 @@ def findboxes(image, verbosity=0):
                 # cv2.imshow('shape '+str(i), separated_img)
                 # save image
                 cv2.imwrite('output_binary/'+str(idx) + '_' + str(i) + '.png', separated_img)
+                detected_digits[idx-1].append(separated_img)
+
+    return detected_digits
     
     print("{} boxes detected (of 114)".format(idx))
     if verbosity >= 1:
