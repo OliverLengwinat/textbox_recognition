@@ -266,28 +266,27 @@ def findboxes(image, verbosity=0):
             # find connected shapes
             num_labels, labels = cv2.connectedComponents(new_img_bin)
             if verbosity >= 1:
-                print("{} shapes in detected box {}".format(num_labels-1), idx)
+                print("{} shapes in detected box {}".format(num_labels-1, idx))
 
-            for i in range(1, num_labels):
+            for component_idx in range(1, num_labels):
                 # empty canvas
                 separated_img = np.uint8(np.zeros_like(labels))
 
                 # draw white where current shape is detected
-                separated_img[labels==i] = 255
+                separated_img[labels==component_idx] = 255
                 # apply to all channels
                 separated_img[:,:] = separated_img
 
                 # cv2.imshow('shape '+str(i), separated_img)
                 # save image
-                cv2.imwrite('output_binary/'+str(idx) + '_' + str(i) + '.png', separated_img)
+                cv2.imwrite('output_binary/'+str(idx) + '_' + str(component_idx) + '.png', separated_img)
                 detected_digits[idx-1].append(separated_img)
 
-    return detected_digits
-    
     print("{} boxes detected (of 114)".format(idx))
     if verbosity >= 1:
         cv2.imshow("annotated boxes", img_annotated_boxes)
-
+    
+    return detected_digits
 
 
 if __name__ == '__main__':

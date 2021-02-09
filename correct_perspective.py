@@ -92,7 +92,7 @@ def apply_threshold(filtered):
 
     return thresh
 
-def detect_contour(img, image_shape, verbosity=0):
+def detect_contour(img, image_shape):
     """
 
     Args:
@@ -157,7 +157,7 @@ def correct_skew(image, verbosity=0):
         plt.title('After applying OTSU threshold')
         plt.show()
 
-    cnv, largest_contour = detect_contour(threshold_image, image.shape, verbosity=verbosity)
+    cnv, largest_contour = detect_contour(threshold_image, image.shape)
     if verbosity >= 2:
         plt.title('Largest Contour')
         plt.imshow(cnv)
