@@ -28,7 +28,7 @@ def shift(img,sx,sy):
     return shifted
 
 
-def train_and_predict(input_images):
+def train_and_predict(input_images, verbosity=0):
     # create a MNIST_data folder with the MNIST dataset if necessary
     mnist = input_data.read_data_sets("MNIST_data/", one_hot=True)
 
@@ -95,7 +95,8 @@ def train_and_predict(input_images):
     """
     correct_prediction = tf.equal(tf.argmax(y,1), tf.argmax(y_,1))
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
-    print(sess.run(accuracy, feed_dict={x: mnist.test.images, y_: mnist.test.labels}))
+    if verbosity >=2:
+        print("training accuracy: "+sess.run(accuracy, feed_dict={x: mnist.test.images, y_: mnist.test.labels}))
 
     # create an an array where we can store our 4->1 pictures
     images = np.zeros((len(input_images),784))
@@ -107,28 +108,22 @@ def train_and_predict(input_images):
     # for no in [8,0,4,3]:
     for image in input_images:
         """
-        we need to store the flatten image and generate
-        the correct_vals array
-        correct_val for the first digit (9) would be
-        [0,0,0,0,0,0,0,0,0,1]
+        we need to store the flatten image and generate the correct_vals array
+        correct_val for the digit (9) would be [0,0,0,0,0,0,0,0,0,1]
         """
         current_image = cv2.imread("output_digits/"+image)
         images[i] = mnist_preprocessing.flatten(cv2.cvtColor(current_image, cv2.COLOR_BGR2GRAY))
         cv2.waitKey()
         correct_val = np.zeros((10))
-        correct_val[9] = 1    # set correct value to 9 for now
+        correct_val[9] = 1    # set correct value to 9 for now TODO: label data or remove correct values
         correct_vals[i] = correct_val
         i += 1
 
-    """
-    the prediction will be an array with four values,
-    which show the predicted number
-    """
     prediction = tf.argmax(y,1)
     """
     we want to run the prediction and the accuracy function
     using our generated arrays (images and correct_vals)
     """
-    print(sess.run(prediction, feed_dict={x: images, y_: correct_vals}))
-    #return(sess.run(prediction, feed_dict={x: images, y_: correct_vals}))
+    #print(sess.run(prediction, feed_dict={x: images, y_: correct_vals}))
+    return(sess.run(prediction, feed_dict={x: images, y_: correct_vals}))
     #print(sess.run(accuracy, feed_dict={x: images, y_: correct_vals}))

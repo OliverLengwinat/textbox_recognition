@@ -37,7 +37,12 @@ if __name__ == '__main__':
             cv2.imwrite("output_digits/field_"+str(field_idx+1)+"_digit_"+str(digit_idx+1)+".png", digit_img_mnist)
 
     # get MNIST trained network
-    train_mnist.train_and_predict(listdir("output_digits"))
+    predictions = train_mnist.train_and_predict(listdir("output_digits"), verbosity=args.verbose)
+
+    for prediction, image_name in zip(predictions, listdir("output_digits")):
+        current_image = cv2.imread("output_digits/"+image_name)
+        cv2.imshow(image_name+" - prediction: "+str(prediction), current_image)
+    cv2.waitKey()
 
     # clean up
     if args.verbose >= 1:
